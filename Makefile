@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-c -Wall -Werror -pedantic -g# -Weffc++
+CFLAGS=-c -Wall -Werror -pedantic -g # -Weffc++
 LDFLAGS=#-I~/boost/boost_1_54_0
 SOURCES=main.cpp graph.cpp algorithm.cpp
 OBJECTS=$(SOURCES:.cpp=.o)
@@ -14,4 +14,4 @@ $(EXECUTABLE): $(OBJECTS)
 	$(CC) $(LDFLAGS) $(CFLAGS) $< -o $@
 
 clean:
-	rm -rf *.o main
+	rm -rf *.o *~ main

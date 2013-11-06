@@ -1,121 +1,98 @@
 #include "graph.h"
-#include <boost/algorithm/string/predicate.hpp>
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <limits>
 #include <cassert>
 
-double Graph::heuristic(sz from, sz to) const
-{
-  return Distance::euclidianDistance(vertex(from).x(), vertex(from).y(),
-				     vertex(to).x(), vertex(to).y());
-}
 
-bool Visited::getBit(sz bit)
-{
-  return static_cast<bool>(visit_mask_ & (1 << bit));
-}
+long int const LONG_MAX = 
+  std::numeric_limits<long int>::max();
 
-void Visited::setBit(sz bit)
-{
-  visit_mask_ |= 1 << bit;
-}
-
-bool Visited::notVisited(sz id)
-{
-  // if (id < size_)
-  return !getBit(id);
-}
-
-void Visited::visit(sz id)
-{
-  // if (id < size_)
-  setBit(id);
-}
-
-void Visited::unvisitAll()
-{
-  visit_mask_ = 0;
-}
 
 Graph::Graph(char const* coordinates, char const* graph)
 {
-  // for better performance
-  //std::ios_base::sync_with_stdio(false);
-
+  
   std::ifstream co(coordinates);
-  char const prefix_vertex[] = "v";
   std::string line;
+  std::string dummy = "";
   
-  // find min x and y coordinates
   sz id = 0;
-  long int x_min = 1000000000; // "infinity"
-  long int y_min = 1000000000;
+  long int x_min = LONG_MAX;
+  long int y_min = LONG_MAX;
 
-  while (std::getline(co, line))
-    { 
-      long int x, y;
-      std::istringstream iss(line);
-      if (boost::starts_with(line, prefix_vertex))
-	{
-	  iss.ignore(1, '1'); // "v"
-	  if (!(iss >> id >> x >> y)) break; // Error
-	  if (x < x_min)
-	    x_min = x;
-	  if (y < y_min)
-	    y_min = y; 
-	}
-    }
-  num_v_ = id;    
-  // reopen coordinates
-  co.close(); 
-  co.open(coordinates);
- 
- while (std::getline(co, line))
-    {
-      std::istringstream iss(line);
-      long int x, y;
-      if (boost::starts_with(line, prefix_vertex))
-	{
-	  iss.ignore(1, '1'); // "v"
-	  if (!(iss >> id >> x >> y)) break; // Error
-	  sz x_ = static_cast<sz>(x - x_min);
-	  sz y_ = static_cast<sz>(y - y_min);
-	  vertices_.push_back(Vertex(id - 1, 0.0, x_, y_)); // id - 1 !!!
-	}
-    }
+  
+  while (std::getline(co, line) && line[0] != 'p')
+    ;
+  /* p aux sp co num_v */
+  {
+    std::istringstream iss(line);
+
+    iss >> dummy >> dummy >> dummy >> dummy
+	>> num_v_;
+  }
+  while (std::getline(co, line) && line[0] != 'v')
+    ;
+  /* v id x y */
+  long int x, y;
+  {
+    std::istringstream iss(line);
+    iss >> dummy >> id >> x >> y;
+    vertices_.push_back(Vertex(id - 1, x, y)); 
+  }
+
+  while (co >> dummy >> id >> x >> y)
+   {
+      vertices_.push_back(Vertex(id - 1, x, y));
+      
+      if (x < x_min)
+	x_min = x;
+      if (y < y_min)
+	y_min = y;    
+   }
+  
   assert(num_v_ == id);
-  assert(num_v_ == vertices_.size());
-  co.close();
-  
-  
-  // read adjacency list
-  std::ifstream gr(graph);
-  char const prefix_num_edges[] = "p sp";
-  char const prefix_arc[] = "a";
-  
-  while (std::getline(gr, line))
+
+  vector<Vertex>::iterator vit;
+  for (vit = vertices_.begin(); vit != vertices_.end(); ++vit)
     {
-      std::istringstream iss(line);
-      sz u, v;
-      if (boost::starts_with(line, prefix_arc))
-	{
-	  iss.ignore(1, '1'); // "a"
-	  if (!(iss >> u >> v >> id)) break; // Error
-	  addEdge(u - 1, v - 1); // 0-based index
-	  Vertex from = vertex(u - 1);
-	  Vertex to   = vertex(v - 1);
-	  addWeight(u - 1, Distance::euclidianDistance(from.x(), from.y(), to.x(), to.y())); 
-	}
-      else if (boost::starts_with(line, prefix_num_edges))
-	{
-	  iss.ignore(4, '1'); // "p sp"
-	  iss >> u >> v;
-	  assert(num_v_ == u);
-	  num_e_ = v;
-	}
+      (*vit).setX((*vit).x() - x_min);
+      (*vit).setY((*vit).y() - y_min);
     }
-  visited_ = Visited(num_v_);
+
+  co.close();
+  assert(num_v_ == vertices_.size());
+
+   
+  std::ifstream gr(graph);
+  
+  while (std::getline(gr, line) && line[0] != 'p')
+    ;
+  /* p sp num_v num_e */
+  {
+    std::istringstream iss(line);
+    iss >> dummy >> dummy >> num_v_ >> num_e_;
+    assert(num_v_ == vertices_.size());
+  }
+  
+  while (std::getline(gr, line) && line[0] != 'a')
+    ;
+  /* a from to weight */
+  sz u, v;
+  {
+    std::istringstream iss(line);
+    iss >> dummy >> u >> v >> dummy;
+    addEdge(u - 1, v - 1);
+    addWeight(u - 1, Distance::euclidianDistance(vertex(u - 1), vertex(v - 1)));
+  }
+
+  while (gr >> dummy >> u >> v >> dummy)
+    {
+      Vertex from = vertex(u - 1);
+      Vertex to   = vertex(v - 1);
+      addEdge(u - 1, v - 1);
+      addWeight(u - 1, Distance::euclidianDistance(from, to));   
+    }
 }
 
 Vertex const& Graph::vertex(sz id) const
@@ -150,22 +127,3 @@ double const& Graph::edgeWeight(sz from, sz nnum) const
   return weights_[from][nnum];
 }
 
-void Graph::visit(sz id)
-{
-  visited_.visit(id);
-}
-
-bool Graph::notVisited(sz id)
-{
-  return visited_.notVisited(id);
-}
-
-void Graph::unvisitAll()
-{
-  visited_.unvisitAll();
-}
-
-double& Graph::distance(sz id)
-{
-  return vertices_[id].distance();
-}

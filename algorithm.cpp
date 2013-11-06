@@ -1,195 +1,77 @@
 #include "algorithm.h"
 #include "priority_queue.h"
-//#include <queue>
-#include <iostream> // printPath
+#include <iostream>
 
-struct cmp {
-    bool operator() (Vertex const &u, Vertex const &v) {
-      return u.getDistance() < v.getDistance();
-    }
-};
 
-vector<sz> ShortestPath::dijkstraSimple(Graph &g, sz from, sz to)
+void ShortestPath::unvisitAll()
 {
-  vector<sz> prev;
-  for (sz i = 0; i < g.num_v(); ++i)
-    prev.push_back(i);
-
-  
-  priority_queue<Vertex, cmp> Q;
-  for (size_t i = 0; i < g.num_v(); ++i)
-    g.distance(i) = INFINITY; // cmath
-  
-  g.distance(from) = 0;
-  Q.push(g.vertex(from));
-  
-  sz u, v;
-  double w;
-  g.unvisitAll();
-  while(!Q.empty())
-    {
-      // extract min
-      u = Q.top().id();
-      Q.pop();
-      
-      if (!g.notVisited(u)) continue;
-      if (u == to) break;
-      
-      // explore u's neighbours
-      vector<sz> neighbours = g.neighbours(u);
-      
-      for (sz i = 0; i != neighbours.size(); ++i)
-	{
-	  v = g.vertex(neighbours[i]).id();
-	  w = g.edgeWeight(u, i);
-	  if (g.notVisited(v) && 
-	      g.distance(u) + w < g.distance(v))
-	    {
-	      g.distance(v) = g.distance(u) + w;
-	      Q.push(Vertex(v, g.distance(v)));
-	      prev[v] = u;
-	    }
-	}
-      // visit u
-      g.visit(u);
-    }
-  
-  // cleaning up
-  g.unvisitAll();
-  
-  return prev;
+  visited_.assign(graph_.num_v(), '\0');
 }
-
-vector<sz> ShortestPath::dijkstra(Graph &g, sz from, sz to)
+   
+double ShortestPath::dijkstra()
 {
-  Visited black(g.num_v());
-  g.unvisitAll();
-  vector<sz> vertex_queue_positions(g.num_v(), 0);
+  sz n = graph_.num_v();
+  vector<sz> vertex_queue_positions(n, 0);
   
-  vector<sz> prev;
-  for (sz i = 0; i < g.num_v(); ++i)
-    prev.push_back(i);
-  priority_queue<Vertex, cmp> Q(&vertex_queue_positions);
-  for (size_t i = 0; i < g.num_v(); ++i)
-    g.distance(i) = INFINITY; // cmath
+  priority_queue<Node, DijkstraComparator> 
+    Q(&vertex_queue_positions);
+ 
+  distance_[from_] = 0.0;
+  Q.push(Node(from_, 0.0));
   
-  g.distance(from) = 0;
-  Q.push(g.vertex(from));
-  
-  g.visit(from); // !!!
+  visited_[from_] = 'y';
   
   sz u, v;
   double w;
   
   while(!Q.empty())
     {
-      // extract min
+
       u = Q.top().id();
       Q.pop();
       
-      if (u == to) break;
+      if (u == to_) break;
       
-      // explore u's neighbours
-      vector<sz> neighbours = g.neighbours(u);
-      
+  
+      vector<sz> const &neighbours = graph_.neighbours(u);
       for (sz i = 0; i != neighbours.size(); ++i)
-	{
-	  v = g.vertex(neighbours[i]).id();
-	  w = g.edgeWeight(u, i);
-	  if (g.notVisited(v) && 
-	      g.distance(u) + w < g.distance(v))
-	    {
-	      g.distance(v) = g.distance(u) + w;
-	      prev[v] = u;
-	      if (g.notVisited(v))
-		{
-		  g.visit(v);
-		  Q.push(Vertex(v, g.distance(v)));
-		}
-	      else if (black.notVisited(v))
-		Q.change_key(vertex_queue_positions[v], 
-			     Vertex(v, g.distance(v)));
-	    }
-	}
-      black.visit(u);
+	if (!visited_[neighbours[i]])
+	  {
+	    v = neighbours[i];
+	    w = graph_.edgeWeight(u, i);
+	    
+	    if (distance_[u] + w < distance_[v])
+	      {
+		
+		distance_[v] = distance_[u] + w;
+		prev_[v] = u;
+		
+		if (!vertex_queue_positions[v])
+		  Q.push(Node(v, distance_[v]));
+		
+		else 
+		  Q.change_key(vertex_queue_positions[v], 
+			       Node(v, distance_[v]));
+	      }
+	  }
+      
+      visited_[u] = 'y';
+      
     }
-  
-  // cleaning up
-  g.unvisitAll();
-  
-  return prev;
+    
+  unvisitAll();
+  return distance_[to_];
 }
 
-vector<sz> ShortestPath::aStar(Graph &g, sz from, sz to)
-{
-  Visited black(g.num_v());
-  vector<double> f(g.num_v());
-  g.unvisitAll();
-  vector<sz> vertex_queue_positions(g.num_v(), 0);
-  vector<sz> prev;
-  for (size_t i = 0; i < g.num_v(); ++i)
-    {
-      f[i] = g.distance(i) = INFINITY; // cmath
-      prev.push_back(i);
-    }     
-  g.distance(from) = 0;
-  f[from] = g.heuristic(from, to);
 
-  
-  priority_queue<Vertex, cmp> Q(&vertex_queue_positions);
-  Q.push(g.vertex(from));
-  
-  g.visit(from); // !!!
-  
-  sz u, v;
-  double w;
-  
-  while(!Q.empty())
-    {
-      // extract min
-      u = Q.top().id();
-      Q.pop();
-      
-      if (u == to) break;
-      
-      // explore u's neighbours
-      vector<sz> neighbours = g.neighbours(u);
-      
-      for (sz i = 0; i != neighbours.size(); ++i)
-	{
-	  v = g.vertex(neighbours[i]).id();
-	  w = g.edgeWeight(u, i);
-	  if (g.notVisited(v) && 
-	      g.distance(u) + w < g.distance(v))
-	    {
-	      g.distance(v) = g.distance(u) + w;
-	      prev[v] = u;
-	      if (g.notVisited(v))
-		{
-		  g.visit(v);
-		  Q.push(Vertex(v, g.distance(v)));
-		}
-	      else if (black.notVisited(v))
-		Q.change_key(vertex_queue_positions[v], 
-			     Vertex(v, g.distance(v)));
-	    }
-	}
-      black.visit(u);
-    }
-  
-  // cleaning up
-  g.unvisitAll();
-  
-  return prev;
-}
-
-void ShortestPath::printPath(vector<sz> const& p, sz src, sz dst) 
+void ShortestPath::printPath(sz src, sz dst) 
 {
-  if(dst == src) 
+  if(src == dst) 
     {
       std::cout << dst << " ";
       return; 
     }
-  printPath(p, src, p[dst]);
+  printPath(src, prev_[dst]);
   std::cout << dst << " ";
 }
+

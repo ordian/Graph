@@ -12,45 +12,24 @@ typedef vector< vector<double> > Weights;
 
 struct Vertex
 {
-Vertex(sz id = 0, double distance = 0.0, sz x = 0, sz y = 0)
+Vertex(sz id = 0, long x = 0, long y = 0)
     : id_(id)
-    , distance_(distance)
     , x_(x)
     , y_(y)
   {}
+
   sz id() const { return id_; }
-  // distance from initial vertex
-  // for graph search algorithms
-  double& distance() { return distance_; }
-  double const& getDistance() const { return distance_; }
-  
-  
-  sz x() const { return x_; }
-  sz y() const { return y_; }
+  long x() const { return x_; }
+  long y() const { return y_; }
+
+  void setX(long x) { x_ = x; }
+  void setY(long y) { y_ = y; }
+
 private:
   sz id_;
-  double distance_;
-  // coordinates
-  sz x_;
-  sz y_;
-};
 
-class Visited
-{
- public:
- Visited(sz size = 0)
-    : size_(size)
-    , visit_mask_(0)
-    {}
-  bool notVisited(sz vertex);
-  void visit(sz vertex);
-  void unvisitAll();
-  sz size();
- private:
-  sz size_;
-  sz visit_mask_;
-  void setBit(sz bit);
-  bool getBit(sz bit);
+  long x_;
+  long y_;
 };
 
 class Graph
@@ -61,13 +40,8 @@ class Graph
   
   void addEdge(sz u, sz v);
   void addWeight(sz from, double weight);
-  
-  void visit(sz id);
-  bool notVisited(sz id);
-  void unvisitAll();
 
   double& distance(sz id);
-  double heuristic (sz from, sz to) const;
 
   Vertex const& vertex(sz id) const;
   vector<sz> const& neighbours(sz id) const;
@@ -82,7 +56,6 @@ class Graph
   vector<Vertex> vertices_;
   adj_vect adj_;
   Weights weights_;
-  Visited visited_;
 
   Graph& operator=(Graph const&);
   Graph(Graph const&); 
@@ -94,9 +67,15 @@ class Distance
 {
  public:
 
-  static double euclidianDistance(sz x1, sz y1, sz x2, sz y2)
+  static double euclidianDistance(Vertex const &v1, 
+				  Vertex const &v2)
   {
-    return sqrt((x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2));
+    return sqrt(sqr(v1.x() - v2.x()) + sqr(v1.y() - v2.y()));
+  }
+  
+  static double sqr(double const &x)
+  {
+    return x * x;
   }
 };
 

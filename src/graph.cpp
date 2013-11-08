@@ -1,4 +1,4 @@
-#include "graph.h"
+#include "../include/graph.hpp"
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -83,7 +83,8 @@ Graph::Graph(char const* coordinates, char const* graph)
     std::istringstream iss(line);
     iss >> dummy >> u >> v >> dummy;
     addEdge(u - 1, v - 1);
-    addWeight(u - 1, Distance::euclidianDistance(vertex(u - 1), vertex(v - 1)));
+    addWeight(u - 1, 
+    Distance::euclidianDistance(vertex(u - 1), vertex(v - 1)));
   }
 
   while (gr >> dummy >> u >> v >> dummy)
@@ -107,7 +108,7 @@ vector<sz> const& Graph::neighbours(sz id) const
 
 void Graph::addEdge(sz u, sz v)
 {
-  // lazy add
+  /* lazy add */
   if (adj_.size() <= u)
     for (sz i = adj_.size(); i <= u; ++i)
       adj_.push_back(vector<sz>());

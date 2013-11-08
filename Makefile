@@ -24,7 +24,7 @@ all: ${TARGET}
  
 clean:
 	@echo "Cleaning..."
-	rm -rf *.o
+	rm -rf *.o src/*~ include/*~
  
 mrproper: clean
 	rm -rf ${TARGET}	

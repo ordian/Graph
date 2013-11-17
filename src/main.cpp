@@ -65,8 +65,9 @@ int runAlgorithm(Graph &g, int OPTION)
           msg += "A*...";
           break;
       case 3:
-	  cout << "Not implemented yet..." << endl;
-          return 1;
+	  weight = d.biDijkstra();
+          msg += "Bi-Dijkstra...";
+          break;
       case 4:
 	  cout << "Not implemented yet..." << endl;
           return 1;

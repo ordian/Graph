@@ -7,6 +7,6 @@ Graph single pair shortest path algorithms:
 * AStar
 
 TODO:
-* Bi-Dijkstra
+* Fix Bi-Dijkstra
 * Bi-AStar
 * ...

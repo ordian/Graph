@@ -5,8 +5,8 @@ Graph single pair shortest path algorithms:
 
 * Dijkstra
 * AStar
+* Bi-Dijkstra
 
 TODO:
-* Bi-Dijkstra
-* Bi-AStar
-* ...
+* tests
+* graphics

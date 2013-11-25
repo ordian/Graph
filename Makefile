@@ -2,9 +2,9 @@ TARGET  := $(shell basename $$PWD)
 # Compiler
 CC      := g++
 # Warning levels
-WARN    := -Wall -Wextra -Werror -pedantic -Wunused -Wmissing-declarations -Wpointer-arith -Wcast-align -Wwrite-strings -Wredundant-decls
+WARN    := -Wall -Wextra -Werror -std=c++03 -pedantic -Wunused -Wmissing-declarations -Wpointer-arith -Wcast-align -Wwrite-strings -Wredundant-decls
 # Optimisation
-OFLAGS  := -O2
+OFLAGS  := 
 # Aditionnal libraries to link
 LDFLAGS := 
  

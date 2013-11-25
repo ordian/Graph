@@ -8,5 +8,6 @@ Graph single pair shortest path algorithms:
 * Bi-Dijkstra
 
 TODO:
+
 * tests
 * graphics

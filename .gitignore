@@ -12,8 +12,3 @@
 *.la
 *.a
 
-# Target
-Graph
-
-# Test
-Tests

@@ -1,11 +1,18 @@
 #include "../include/algorithm.hpp"
+#include "../include/timer.hpp"
 #include <iostream>
+#include <iomanip>
 #include <string>
-#include <ctime>
+
 
 using std::cin;
 using std::cout;
 using std::endl;
+using std::setprecision;
+
+void option();
+void usage();
+void runAlgorithm(Graph&, int OPTION, Timer&);
 
 void option()
 {
@@ -14,7 +21,9 @@ void option()
 	 << endl << "    1 - Dijkstra (default)"
 	 << endl << "    2 - A*"
 	 << endl << "    3 - BiDijkstra"
-	 << endl << "    4 - ..."
+	 << endl << "    4 - BiAStar"
+	 << endl << "    5 - ALT"
+	 << endl << "    6 - BiALT"
 	 << endl;
 }
 
@@ -27,28 +36,15 @@ void usage()
     option();
 }
 
-/* Unix */
-class Timer
-{
-public:
-    Timer() { clock_gettime(CLOCK_REALTIME, &beg_); }
-
-    double elapsed() {
-        clock_gettime(CLOCK_REALTIME, &end_);
-        return (end_.tv_sec - beg_.tv_sec) * 1000 +
-            (end_.tv_nsec - beg_.tv_nsec) / 1000000.;
-    }
-    
-    void reset() { clock_gettime(CLOCK_REALTIME, &beg_); }
-    
-private:
-    timespec beg_, end_;
-};
-
-
 
 void runAlgorithm(Graph &g, int OPTION, Timer & tmr)
 {
+    ShortestPath d(0, 0, g);
+    //char const * graphBMP = "OUTPUT/graph.bmp";
+    //char const * algorithmBMP = "OUTPUT/algorithm.bmp";
+  
+    //d.writeBMP(d.getVisited(), d.getPrev(), graphBMP);
+
     while (OPTION)
     {
 	sz from = 0;
@@ -71,8 +67,9 @@ void runAlgorithm(Graph &g, int OPTION, Timer & tmr)
 	if (to >= g.num_v())
 	    return;
 	
-	tmr.reset();	
-	ShortestPath d(from, to, g);
+	tmr.reset();
+	d.setSource(from);
+	d.setDestination(to);
 	double weight = 0;
 	std::string msg = "Running ";
       
@@ -92,12 +89,22 @@ void runAlgorithm(Graph &g, int OPTION, Timer & tmr)
 	    msg += "Bi-Dijkstra...";
 	    break;
 	case 4:
-	    cout << "Not implemented yet..." << endl;
-	    return;
+	    weight = d.biAStar();
+	    msg += "BiAStar...";
+	    break;
+	case 5:
+	    weight = d.ALT();
+	    msg += "ALT...";
+	    break;
+	case 6:
+	    weight = d.biALT();
+	    msg += "BiALT...";
+	    break;
 	default:
 	    return;
         }
 	
+	//d.writeBMP(d.getVisited(), d.getPrev(), algorithmBMP);
 	cout << msg << endl;	
 	d.printPath(from, to);
 	d.printStatistics();
@@ -134,6 +141,7 @@ int main(int argc, char** argv)
     int OPTION = 1;
     Timer tmr;
     
+    
     cout << "Reading graph..." << endl;
 
     Graph g(argv[1], argv[2]);
@@ -143,6 +151,7 @@ int main(int argc, char** argv)
 
     double t = tmr.elapsed();
     cout << "Elapsed time: "
+	 << setprecision(10)
 	 << t 
 	 << "ms"
 	 << endl;

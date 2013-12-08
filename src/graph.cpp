@@ -38,6 +38,8 @@ Graph::Graph(char const* coordinates, char const* graph)
   {
     std::istringstream iss(line);
     iss >> dummy >> id >> x >> y;
+    x_min = x;
+    y_min = y;
     vertices_.push_back(Vertex(id - 1, x, y)); 
   }
 

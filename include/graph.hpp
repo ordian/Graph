@@ -43,6 +43,7 @@ class Graph
   void addEdge(sz u, sz v);
   void addWeight(sz from, double weight);
 
+    /* deprecated */
   double& distance(sz id);
 
   Vertex     const& vertex    (sz id) const;

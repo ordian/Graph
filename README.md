@@ -1,4 +1,4 @@
-Graph
+Shortest Path
 =====
 
 Graph single pair shortest path algorithms:
@@ -6,8 +6,12 @@ Graph single pair shortest path algorithms:
 * Dijkstra
 * AStar
 * Bi-Dijkstra
+* Bi-AStar
+* ALT (random, planar, avoid)
+* Bi-ALT (random, planar, avoid)
+* Tests
+* BMP visualization
 
 TODO:
 
-* tests
-* graphics
+* TNR

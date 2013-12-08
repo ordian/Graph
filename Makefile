@@ -1,7 +1,7 @@
 CC=g++
 # Warning levels
 CFLAGS=-c -Wall -Wextra -std=c++03 -pedantic -Wunused -Wmissing-declarations -Wpointer-arith -Wcast-align -Wwrite-strings -Wredundant-decls
-OFLAGS=#-O2
+OFLAGS=-O3
 LDFLAGS= 
 TSFLAGS=-lboost_unit_test_framework
 
@@ -24,11 +24,11 @@ test: all_tests
 	$(CC) tests/testAlgorithm.o src/graph.o src/algorithm.o -o Test $(TSFLAGS)
 
 all_tests: $(TEST_SRCS)
-	$(CC) $(WARN) -c -g $(TEST_SRCS) -o tests/testAlgorithm.o
+	$(CC) $(CFLAGS) -c $(TEST_SRCS) -o tests/testAlgorithm.o
 
 clean:
 	@echo "Cleaning..."
-	rm -rf src/*.o test/*.o src/*~ include/*~ *~
+	rm -rf src/*.o tests/*.o src/*~ include/*~ *~
  
 mrproper: clean
 	rm -rf ${TARGET} Test

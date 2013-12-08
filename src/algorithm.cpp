@@ -672,7 +672,7 @@ vector<landmark> ShortestPath::ALTPreprocess(sz num_landmarks, char OPTION)
 	name = "Random";
 
     altfile << "preprocessing/" << name << "ALT_" << graph_.num_v() << ".txt";
-    std::cout << "Start" << name << "ALT preprocessing..." << std::endl;
+    std::cout << "Start " << name << "ALT preprocessing..." << std::endl;
     std::string ALT(altfile.str());
     vector<landmark> preproc;
     bool recompute = false;
@@ -743,7 +743,7 @@ vector<landmark> ShortestPath::ALTPreprocess(sz num_landmarks, char OPTION)
 	}
     }
 
-    std::cout << "End planar ALT preprocessing!" << std::endl;
+    std::cout << "End " << name << " ALT preprocessing!" << std::endl;
     
     return preproc;
 }

@@ -13,7 +13,7 @@
 #include <stack>
 #include <queue>
 
-
+ 
 #define getrandom(min, max) \
     ((rand()%(int)(((max) + 1)-(min)))+ (min))
 
@@ -918,16 +918,22 @@ void ShortestPath::writeBMP(vector<char> const & visited,
     assert(visited.size() == n);
     for (sz i = 0; i < n; ++i)
     {
-	if (visited[i])
-	{
-	    draw.pen_width(3);   
-	    draw.pen_color(0, 255, 0);
-	}
-	else
+	if (!visited[i])
 	{
 	    draw.pen_width(1);   
 	    draw.pen_color(0, 0, 0);
 	}
+	else if (visited[i] == 'b')
+	{
+	    draw.pen_width(3);   
+	    draw.pen_color(0, 0, 255);
+	}
+	else
+	{
+	    draw.pen_width(3);   
+	    draw.pen_color(0, 255, 0);
+	}
+
 	draw.plot_pen_pixel(BORDER + graph_.vertex(i).x() / x_scale, 
 			    BORDER + graph_.vertex(i).y() / y_scale);
     }

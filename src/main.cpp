@@ -41,7 +41,7 @@ void runAlgorithm(Graph &g, int OPTION, Timer & tmr)
 {
     ShortestPath d(0, 0, g);
     //char const * graphBMP = "OUTPUT/graph.bmp";
-    //char const * algorithmBMP = "OUTPUT/algorithm.bmp";
+    char const * algorithmBMP = "OUTPUT/algorithm.bmp";
   
     //d.writeBMP(d.getVisited(), d.getPrev(), graphBMP);
 
@@ -104,7 +104,7 @@ void runAlgorithm(Graph &g, int OPTION, Timer & tmr)
 	    return;
         }
 	
-	//d.writeBMP(d.getVisited(), d.getPrev(), algorithmBMP);
+	d.writeBMP(d.getVisited(), d.getPrev(), algorithmBMP);
 	cout << msg << endl;	
 	d.printPath(from, to);
 	d.printStatistics();

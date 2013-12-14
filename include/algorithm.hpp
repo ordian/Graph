@@ -45,6 +45,7 @@ public:
 	, statistics_()
 	, dijkstra_(g.num_v(), INFINITY)
 	, ALTPreprocessing_(ALTPreprocess(num_landmarks, ALT))
+	, numSelectedLandmarks_(num_landmarks)
     {}
    
     struct Comparator 
@@ -66,16 +67,16 @@ public:
     };
     
     /* pointer to method */
-    typedef vector<landmark> (ShortestPath::*Preprocessing)();
-    typedef double (ShortestPath::*Heuristic)(Vertex const &, vector<landmark> const &, bool);
+    typedef void (ShortestPath::*Preprocessing)();
+    typedef double (ShortestPath::*Heuristic)(Vertex const &, bool);
     
-    vector<landmark> ALTPreprocessing();
-    vector<landmark> doNothingPreprocessing();
-    double dijkstraHeuristic(Vertex const &, vector<landmark> const &, bool);
-    double    aStarHeuristic(Vertex const &, vector<landmark> const &, bool);
-    double  biAStarHeuristic(Vertex const &, vector<landmark> const &, bool);
-    double      ALTHeuristic(Vertex const &, vector<landmark> const &, bool);
-    double    biALTHeuristic(Vertex const &, vector<landmark> const &, bool);
+    void       ALTPreprocessing();
+    void doNothingPreprocessing();
+    double dijkstraHeuristic(Vertex const & V, bool forward = true);
+    double    aStarHeuristic(Vertex const & V, bool forward = true);
+    double  biAStarHeuristic(Vertex const & V, bool forward);
+    double      ALTHeuristic(Vertex const & V, bool forward = true);
+    double    biALTHeuristic(Vertex const & V, bool forward);
 
     double unidirectionalAlgorithm(Preprocessing, Heuristic);
     double bidirectionalAlgorithm (Preprocessing, Heuristic); 
@@ -93,17 +94,14 @@ public:
     vector<landmark> randomALTPreprocess(sz num_landmarks = 16);
     vector<landmark>  avoidALTPreprocess(sz num_landmarks = 16);
 
-    void dijkstraAll();
+    void dijkstraAll(sz from);
     
     void printPath(sz src, sz dst) const;
     void printStatistics() const;
     statistics const & stats() { return statistics_; }
-    void writeBMP(vector<char> const & visited_, 
-		  vector<boost::optional<sz> > const & prev,
-		  char const * filename) const;
-    vector<char> const & getVisited() const { return visited; }
-    vector<boost::optional<sz> > const & getPrev() const { return prev_; }
-
+    void writeBMP(char const * filename) const;
+    
+    
     sz source()      const { return from_; }
     sz destination() const { return to_; }
 
@@ -119,6 +117,7 @@ private:
     statistics statistics_;
     vector<double> dijkstra_;
     vector<landmark> ALTPreprocessing_;
+    sz numSelectedLandmarks_;
 
 private:
     ShortestPath const& 

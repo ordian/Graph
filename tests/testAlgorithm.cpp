@@ -95,7 +95,7 @@ struct Fixture
     {
 	vector<Stat>::const_iterator it;
 	for (it = stats.begin(); it != stats.end(); ++it)
-	    (*it).print();
+	    (*it).print();	    
     }
     
     Timer tmr;
@@ -366,4 +366,78 @@ BOOST_AUTO_TEST_CASE(testAlgorithmTiny)
     BOOST_CHECK_CLOSE(biALT, aStar, EPS);
     BOOST_CHECK_CLOSE(ALT, aStar, EPS);
 }
+
+BOOST_AUTO_TEST_CASE(testPerformance)
+{
+    Graph g("INPUT/USA-road-d.FLA.co", "INPUT/USA-road-d.FLA.gr");
+    sz num_algo = 2 * (2 + 3 * 1);
+    /* mean values */
+    vector<sz>   visited(num_algo);
+    vector<double> times(num_algo);
+    Timer tmr;
+    
+    typedef double (ShortestPath::*algorithm)();
+    static algorithm algo[6] = {&ShortestPath::dijkstra,
+				&ShortestPath::biDijkstra,
+				&ShortestPath::aStar,
+				&ShortestPath::biAStar,
+				&ShortestPath::ALT,
+				&ShortestPath::biALT};
+
+    ShortestPath sp(0, 0, g);
+    ShortestPath spRandomALT(0, 0, g, 2);
+    ShortestPath spPlanarALT(0, 0, g, 1);
+
+    for (sz i = 0; i < NUM_RAND_TESTS; ++i)
+    {
+	sz from = getrandom(0, g.num_v() - 1);
+	sz to   = getrandom(0, g.num_v() - 1);
+	sp.setSource(from);
+	sp.setDestination(to);
+	spRandomALT.setSource(from);
+	spRandomALT.setDestination(to);
+	spPlanarALT.setSource(from);
+	spPlanarALT.setDestination(to);
+	
+	
+	for (sz j = 0; j != 6; ++j)
+	{
+	    tmr.reset();
+	    (sp.*algo[j])();
+	    times[j] += tmr.elapsed();
+	    visited[j] += sp.stats().pushed;
+	}	
+	
+	tmr.reset();
+	spRandomALT.ALT();
+	times[6] += tmr.elapsed();
+	visited[6] += spRandomALT.stats().pushed;
+	tmr.reset();
+	spRandomALT.biALT();
+	times[7] += tmr.elapsed();
+	visited[7] += spRandomALT.stats().pushed;
+
+	tmr.reset();
+	spPlanarALT.ALT();
+	times[8] += tmr.elapsed();
+	visited[8] += spPlanarALT.stats().pushed;
+	tmr.reset();
+	spPlanarALT.biALT();
+	times[9] += tmr.elapsed();
+	visited[9] += spPlanarALT.stats().pushed;
+    }
+    
+    for (sz i = 0; i != num_algo; ++i)
+    {
+	times[i] /= NUM_RAND_TESTS;
+	visited[i] /= NUM_RAND_TESTS;
+	std::cout << "Time: "
+		  << times[i] 
+		  << "Visited: "
+		  << visited[i]
+		  << std::endl;
+    }
+}
+
+
 

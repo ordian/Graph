@@ -47,7 +47,7 @@ bool choose()
 double ShortestPath::unidirectionalAlgorithm(Preprocessing preprocessing, 
 					     Heuristic     heuristic)
 {    
-    vector<landmark> preproc = (this->*preprocessing)();
+    (this->*preprocessing)();
 
     sz n = graph_.num_v();
     statistics_ = statistics();
@@ -88,7 +88,7 @@ double ShortestPath::unidirectionalAlgorithm(Preprocessing preprocessing,
                 if (real_distance[u] + w + EPS < real_distance[v])
                 {
                     Vertex const &V = graph_.vertex(v);
-                    double fromV = (this->*heuristic)(V, preproc, true);  
+                    double fromV = (this->*heuristic)(V, true);  
                     real_distance[v] = real_distance[u] + w;
                     distance[v] = real_distance[u] + w + fromV;
                     prev_[v] = u;
@@ -118,7 +118,7 @@ double ShortestPath::unidirectionalAlgorithm(Preprocessing preprocessing,
 double ShortestPath::bidirectionalAlgorithm(Preprocessing preprocessing, 
 					    Heuristic     heuristic)
 {
-    vector<landmark> preproc = (this->*preprocessing)();
+    (this->*preprocessing)();
 
     sz n = graph_.num_v();
     statistics_ = statistics();
@@ -192,7 +192,7 @@ double ShortestPath::bidirectionalAlgorithm(Preprocessing preprocessing,
                         real_forward_distance[v])
                     {
 			Vertex const &V = graph_.vertex(v);
-			double fromV = (this->*heuristic)(V, preproc, true);  
+			double fromV = (this->*heuristic)(V, true);  
 			real_forward_distance[v] = 
 			    real_forward_distance[u] + w;
 			forward_distance[v] = 
@@ -231,7 +231,7 @@ double ShortestPath::bidirectionalAlgorithm(Preprocessing preprocessing,
 			real_backward_distance[v])
 		    {
 			Vertex const &V = graph_.vertex(v);
-			double fromV = (this->*heuristic)(V, preproc, false);  
+			double fromV = (this->*heuristic)(V, false);  
 			real_backward_distance[v] = 
 			    real_backward_distance[u] + w;
 			backward_distance[v] = 
@@ -315,7 +315,7 @@ double ShortestPath::bidirectionalAlgorithm(Preprocessing preprocessing,
 }
 
 /* store distances in dijkstra_ */
-void ShortestPath::dijkstraAll()
+void ShortestPath::dijkstraAll(sz from)
 {
     sz n = graph_.num_v();
     statistics_ = statistics();
@@ -330,11 +330,11 @@ void ShortestPath::dijkstraAll()
     if (dijkstra_[0] != INFINITY)
 	dijkstra_ = vector<double>(n, INFINITY);
 
-    dijkstra_[from_] = 0.0;
-    prev_[from_] = from_;
+    dijkstra_[from] = 0.0;
+    prev_[from] = from;
     
-    Q.push(Node(from_, 0.0));
-    visited[from_] = 'y';
+    Q.push(Node(from, 0.0));
+    visited[from] = 'y';
 
     while(!Q.empty())
     {
@@ -392,19 +392,22 @@ struct LandmarkComparator
     sz to;
 };
 
-
-vector<landmark> ShortestPath::ALTPreprocessing()
+/* BOTTLENECK */
+void ShortestPath::ALTPreprocessing()
 {
-    vector<landmark> preproc = ALTPreprocessing_;
-    std::sort(preproc.begin(), preproc.end(),
+    /*    
+    std::sort(ALTPreprocessing_.begin(), 
+	      ALTPreprocessing_.end(),
 	      LandmarkComparator(from_, to_));
-    preproc.resize(4);
-    return preproc;
+    
+    // empirical optimum 
+    numSelectedLandmarks_ = 4;
+    */
 }
 
-vector<landmark> ShortestPath::doNothingPreprocessing()
+void ShortestPath::doNothingPreprocessing()
 {
-    return vector<landmark>();
+    return;
 }
 
 vector<landmark> ShortestPath::avoidALTPreprocess(sz num_landmarks)
@@ -415,20 +418,16 @@ vector<landmark> ShortestPath::avoidALTPreprocess(sz num_landmarks)
 
     /* first landmark */
     sz first = getrandom(0, n - 1);
-    dijkstraAll();
+    dijkstraAll(first);
     preproc.push_back(landmark(first, dijkstra_));
 
     for (sz counter = 0; counter + 1 < num_landmarks; ++counter)
     {
-	std::cout << "wait " 
-		  << (num_landmarks - counter) 
-		  << " landmarks..." 
-		  << std::endl;
 	/* pick a root r at random */
 	sz r = getrandom(0, n - 1);
 
 	/* build the shortest path tree from r */
-	from_ = r; dijkstraAll();
+	dijkstraAll(r);
 	vector<vector<sz> > tree(n);
 	for (sz i = 0; i < n; ++i)
 	    if (prev_[i]) /* should always be true */
@@ -438,7 +437,7 @@ vector<landmark> ShortestPath::avoidALTPreprocess(sz num_landmarks)
 	std::queue<sz> q;
 	std::stack<sz> order;
 	q.push(r);
-	std::cout << "Start BFS..." << std::endl;
+
 	while (!q.empty())
 	{
 	    sz c = q.front();
@@ -451,13 +450,13 @@ vector<landmark> ShortestPath::avoidALTPreprocess(sz num_landmarks)
 		if ((*it) != c)
 		    q.push(*it);
 	}
-	std::cout << "End BFS!" << std::endl;
+
 	vector<double> LB(n, 0);
 	vector<double> weight(n, 0);
 	vector<double> size(n, 0);
 	sz w_max = r;
 	double cur_max = 0;
-	std::cout << "Traverse tree..." << std::endl;
+
 	while (!order.empty())
 	{
 	    sz v = order.top();
@@ -467,7 +466,8 @@ vector<landmark> ShortestPath::avoidALTPreprocess(sz num_landmarks)
 	    /* set LB */
 	    for (sz i = 0; i < preproc.size(); ++i)
 	    {
-		double d = fabs(preproc[i].distances[r] - preproc[i].distances[v]);
+		double d = fabs(preproc[i].distances[r] - 
+				preproc[i].distances[v]);
 		if (LB[v] + EPS < d)
 		    LB[v] = d;
 		if (preproc[i].id == v)
@@ -482,7 +482,8 @@ vector<landmark> ShortestPath::avoidALTPreprocess(sz num_landmarks)
 		for (sz i = 0; i < tree[v].size(); ++i)		
 		{
 		    size[v] += size[tree[v][i]];
-		    if (fabs(weight[tree[v][i]]) < EPS)
+		    size[v] += weight[tree[v][i]];
+		    if (size[tree[v][i]] < EPS)
 		    {
 			size[v] = 0;
 			break;
@@ -490,16 +491,16 @@ vector<landmark> ShortestPath::avoidALTPreprocess(sz num_landmarks)
 		    
 		    if (cur_max + EPS < size[tree[v][i]])
 		    {
-			w_max = i;
+			w_max = tree[v][i];
 			cur_max = size[tree[v][i]];
-		    }		    
+		    }
 		}
 	    else
 		size[v] = 0;
 	}   
-	std::cout << "Done traversing!" << std::endl;
+
 	/* starting at w_max, go down tree following the maximum-sized child */
-	std::cout << "Go to leaf from " << w_max << std::endl;
+
 	while (!tree[w_max].empty())
 	{
 	    double w = 0;
@@ -514,9 +515,9 @@ vector<landmark> ShortestPath::avoidALTPreprocess(sz num_landmarks)
 		}
 	}
 	/* pick the leaf at the end of this path as the new landmark */
-	from_ = w_max; dijkstraAll();
+	dijkstraAll(w_max);
 	preproc.push_back(landmark(w_max, dijkstra_));
-	std::cout << "Pick a leaf " << w_max << std::endl;
+
     }
 
     assert(preproc.size() == num_landmarks);
@@ -531,8 +532,7 @@ vector<landmark> ShortestPath::randomALTPreprocess(sz num_landmarks)
     for (sz i = 0; i < num_landmarks; ++i)
     {
 	l = getrandom(0, graph_.num_v() - 1);
-	from_ = l;
-	dijkstraAll();
+	dijkstraAll(l);
 	preproc.push_back(landmark(l, dijkstra_));
     }
     return preproc;
@@ -550,7 +550,7 @@ vector<landmark> ShortestPath::planarALTPreprocess(sz num_landmarks)
     vector<sz>     far_away(num_landmarks);
     vector<double> cur_dist(num_landmarks, 0);
     
-    dijkstraAll();
+    dijkstraAll(center);
     
     double const PI = 3.141592653589793238463;
     
@@ -584,7 +584,8 @@ vector<landmark> ShortestPath::planarALTPreprocess(sz num_landmarks)
 	    }
 	
 	/* update far_away if needed */	
-	double d = dijkstra_[i]; // Distance::euclidianDistance(V, Center);
+	double d = dijkstra_[i]; 
+        // or Distance::euclidianDistance(V, Center);
 	
 	if (d > EPS + cur_dist[sector])
 	{
@@ -594,9 +595,8 @@ vector<landmark> ShortestPath::planarALTPreprocess(sz num_landmarks)
     }
     for (size_t i = 0; i < far_away.size(); ++i)
     {
-	from_ = far_away[i];
-	dijkstraAll();
-	preproc.push_back(landmark(from_, dijkstra_));
+	dijkstraAll(far_away[i]);
+	preproc.push_back(landmark(far_away[i], dijkstra_));
     }
     
     return preproc;
@@ -609,7 +609,6 @@ bool file_exists(const std::string& name)
 }
 
 /* find id of vertex, closest to center */
-
 sz find_center(Graph const &graph)
 {
     /* find center of rectangle */
@@ -697,7 +696,10 @@ vector<landmark> ShortestPath::ALTPreprocess(sz num_landmarks, char OPTION)
 		sz d_size = 0;
 		in.read(reinterpret_cast<char*>(
 			    &d_size), sizeof(sz));
-		
+
+		in.read(reinterpret_cast<char*>(
+			    &preproc[i].id), sizeof(sz));
+
 		preproc[i].distances.resize(d_size);
 		
 		for (sz j = 0; j < d_size; ++j)
@@ -736,6 +738,9 @@ vector<landmark> ShortestPath::ALTPreprocess(sz num_landmarks, char OPTION)
 	    sz d_size = preproc[i].distances.size();
 	    out.write(reinterpret_cast<char*>(
 			  &d_size), sizeof(sz));
+
+	    out.write(reinterpret_cast<char*>(
+			  &preproc[i].id), sizeof(sz));
 	    
 	    for (sz j = 0; j < preproc[i].distances.size(); ++j)
 		out.write(reinterpret_cast<char*>(
@@ -748,15 +753,13 @@ vector<landmark> ShortestPath::ALTPreprocess(sz num_landmarks, char OPTION)
     return preproc;
 }
 
-double ShortestPath::dijkstraHeuristic(Vertex const &V, 
-				       vector<landmark> const & preproc, 
+double ShortestPath::dijkstraHeuristic(Vertex const &V,  
 				       bool forward)
 {
     return 0;
 }
 
 double ShortestPath::aStarHeuristic(Vertex const &V,
-				    vector<landmark> const & preproc,
 				    bool forward)
 {
     Vertex const & From = graph_.vertex(from_);
@@ -769,7 +772,6 @@ double ShortestPath::aStarHeuristic(Vertex const &V,
 }
 
 double ShortestPath::biAStarHeuristic(Vertex const &V,
-				      vector<landmark> const & preproc,
 				      bool forward)
 {
     Vertex const & From = graph_.vertex(from_);
@@ -785,39 +787,32 @@ double ShortestPath::biAStarHeuristic(Vertex const &V,
 
 
 double ShortestPath::ALTHeuristic(Vertex const &V,
-				  vector<landmark> const & preproc,
 				  bool forward)
 {
     
     double max = 0;
-    if (forward)	
-	for (vector<landmark>::const_iterator it = preproc.begin();
-	     it != preproc.end();
-	     ++it)
-	{
-	    double h = fabs((*it).distances[V.id()] - (*it).distances[to_]);
-	    if (max + EPS < h)		
-		max = h;
-	}
-    else
-	for (vector<landmark>::const_iterator it = preproc.begin();
-	     it != preproc.end();
-	     ++it)	    
-	{
-	    double h = fabs((*it).distances[V.id()] - (*it).distances[from_]);
-	    if (max + EPS < h)
-		max = h;
-	}
+    sz to = to_;
+    if (!forward)	
+	to = from_;
+
+    for (sz it = 0;
+	 it != numSelectedLandmarks_;
+	 ++it)
+    {
+	double h = fabs(ALTPreprocessing_[it].distances[V.id()] - 
+			ALTPreprocessing_[it].distances[to]);
+	if (max + EPS < h)		
+	    max = h;
+    }
 
     return max;
 }
 
 double ShortestPath::biALTHeuristic(Vertex const &V,
-				    vector<landmark> const & preproc,
 				    bool forward)
 {
-    return (ALTHeuristic(V, preproc, forward) -
-	    ALTHeuristic(V, preproc, !forward)) / 2;	
+    return (ALTHeuristic(V, forward) -
+	    ALTHeuristic(V, !forward)) / 2;
 }
 
 
@@ -885,11 +880,9 @@ void ShortestPath::printStatistics() const
 	      << std::endl;
 }
 
-void ShortestPath::writeBMP(vector<char> const & visited, 
-			    vector<boost::optional<sz> > const & prev,
-			    char const * bmpfile) const
+void ShortestPath::writeBMP(char const * bmpfile) const
 {
-    int const BORDER = 5;
+    int const BORDER = 10;
     int const HEIGHT = 3000 + 2 * BORDER;
     int const WIDTH  = 3000 + 2 * BORDER;
     
@@ -937,7 +930,7 @@ void ShortestPath::writeBMP(vector<char> const & visited,
 	draw.plot_pen_pixel(BORDER + graph_.vertex(i).x() / x_scale, 
 			    BORDER + graph_.vertex(i).y() / y_scale);
     }
-    
+       
     /* edges */
     draw.pen_width(1);
     draw.pen_color(0, 0, 0);
@@ -953,20 +946,46 @@ void ShortestPath::writeBMP(vector<char> const & visited,
 			      BORDER + v.x() / x_scale, 
 			      BORDER + v.y() / y_scale);   
 	}
-    
+        
     /* shortest path */
-    draw.pen_width(2);
+    draw.pen_width(3);
     draw.pen_color(255, 0, 0);
     sz dst = to_;
+    /* destination */
+    
+    draw.circle(BORDER + graph_.vertex(to_).x() / x_scale, 
+		BORDER + graph_.vertex(to_).y() / y_scale, 6);
     while (dst != from_)
     {
 	Vertex const & u = graph_.vertex(dst);
-	Vertex const & v = graph_.vertex(prev[dst].get());
+	Vertex const & v = graph_.vertex(prev_[dst].get());
 	draw.line_segment(BORDER + u.x() / x_scale, 
 			  BORDER + u.y() / y_scale, 
 			  BORDER + v.x() / x_scale, 
 			  BORDER + v.y() / y_scale);   
-	dst = prev[dst].get();
+	dst = prev_[dst].get();
     }
+    /* source */
+    
+    draw.circle(BORDER + graph_.vertex(from_).x() / x_scale, 
+		BORDER + graph_.vertex(from_).y() / y_scale, 6);
+    
+
+    for (sz it = 0;
+	 it != ALTPreprocessing_.size();
+	 ++it)
+    {
+	draw.pen_color(0, 255, 0);
+	if (it < numSelectedLandmarks_)
+	    draw.pen_color(0, 255, 255);	
+	
+	draw.circle(BORDER + 
+		    graph_.vertex(ALTPreprocessing_[it].id).x() / x_scale, 
+		    BORDER + 
+		    graph_.vertex(ALTPreprocessing_[it].id).y() / y_scale, 
+		    BORDER - 3);
+    }
+
+    
     image.save_image(bmpfile);
 }

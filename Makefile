@@ -1,5 +1,4 @@
 CC=g++
-# Warning levels
 CFLAGS=-c -Wall -Wextra -std=c++03 -pedantic -Wunused -Wmissing-declarations -Wpointer-arith -Wcast-align -Wwrite-strings -Wredundant-decls
 OFLAGS=-O3
 LDFLAGS= 
@@ -15,16 +14,18 @@ TARGET=Graph
 all: $(CPP_SRCS) $(TARGET) 
 
 $(TARGET): $(OBJ_FILES)
+	@echo "Linking..." $(OBJ_FILES)
 	$(CC) $(LDFLAGS) $(OBJ_FILES) -o $@
 
 .cpp.o: 
-	$(CC) $(CFLAGS) $< -o $@
+	@echo "Compiling..." $<
+	$(CC) $(CFLAGS) $(OFLAGS) $< -o $@
 
 test: all_tests
 	$(CC) tests/testAlgorithm.o src/graph.o src/algorithm.o -o Test $(TSFLAGS)
 
 all_tests: $(TEST_SRCS)
-	$(CC) $(CFLAGS) -c $(TEST_SRCS) -o tests/testAlgorithm.o
+	$(CC) $(CFLAGS) $(OFLAGS) $(TEST_SRCS) -o tests/testAlgorithm.o
 
 clean:
 	@echo "Cleaning..."

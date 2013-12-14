@@ -32,18 +32,17 @@ void usage()
     cout << "Usage: ./main "
 	 << "INPUT/USA-road-d.***.co "
 	 << "INPUT/USA-road-d.***.gr "
-	 << "[OPTION]";
+	 << "[OPTION] "
+	 << "render (default=false)";
     option();
 }
 
 
 void runAlgorithm(Graph &g, int OPTION, Timer & tmr)
 {
-    ShortestPath d(0, 0, g);
-    //char const * graphBMP = "OUTPUT/graph.bmp";
+    ShortestPath d(0, 0, g);    
     char const * algorithmBMP = "OUTPUT/algorithm.bmp";
-  
-    //d.writeBMP(d.getVisited(), d.getPrev(), graphBMP);
+     
 
     while (OPTION)
     {
@@ -66,6 +65,18 @@ void runAlgorithm(Graph &g, int OPTION, Timer & tmr)
 	cin >> to;
 	if (to >= g.num_v())
 	    return;
+
+	char render = '\0';
+
+	while ((render != 'y') && 
+	       (render != 'n'))
+	{
+	    cout << "Render algorithm? (y/n)"
+		 << ":"
+		 << endl;
+	    
+	    cin >> render;
+	}
 	
 	tmr.reset();
 	d.setSource(from);
@@ -104,7 +115,10 @@ void runAlgorithm(Graph &g, int OPTION, Timer & tmr)
 	    return;
         }
 	
-	d.writeBMP(d.getVisited(), d.getPrev(), algorithmBMP);
+	
+	if (render == 'y')
+	    d.writeBMP(algorithmBMP);
+	
 	cout << msg << endl;	
 	d.printPath(from, to);
 	d.printStatistics();

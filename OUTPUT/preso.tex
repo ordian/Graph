@@ -1,3 +1,16 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Beamer Presentation
+% LaTeX Template
+% Version 1.0 (10/11/12)
+%
+% This template has been downloaded from:
+% http://www.LaTeXTemplates.com
+%
+% License:
+% CC BY-NC-SA 3.0 (http://creativecommons.org/licenses/by-nc-sa/3.0/)
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %----------------------------------------------------------------------------------------
 %	PACKAGES AND THEMES
 %----------------------------------------------------------------------------------------
@@ -73,8 +86,9 @@
 %----------------------------------------------------------------------------------------
 %	TITLE PAGE
 %----------------------------------------------------------------------------------------
+\setbeamertemplate{footline}{\hspace*{1.5cm}\scriptsize{\hfill\insertframenumber\hspace*{.5cm}}} 
 
-\title[Граф дорог]{Кратчайшие пути в графе дорог} % The short title appears at the bottom of every slide, the full title is only on the title page
+\title[Граф дорог]{Кратчайшие пути на графе дорог} % The short title appears at the bottom of every slide, the full title is only on the title page
 
 \author{Андроник Ордиян\\ \textbf{Научный руководитель}: Алексей Гуревич} % Your name
 \institute[SPbAU] % Your institution as it will appear on the bottom of every slide, may be shorthand to save space
@@ -92,10 +106,10 @@
 \titlepage % Print the title page as the first slide
 \end{frame}
 
-\begin{frame}
-\frametitle{Обзор} % Table of contents slide, comment this block out to remove it
-\tableofcontents % Throughout your presentation, if you choose to use \section{} and \subsection{} commands, these will automatically be printed on this slide as an overview of your presentation
-\end{frame}
+%\begin{frame}
+%\frametitle{Обзор} % Table of contents slide, comment this block out to remove it
+%\tableofcontents % Throughout your presentation, if you choose to use \section{} and \subsection{} commands, these will automatically be printed on this slide as an overview of your presentation
+%\end{frame}
 
 %----------------------------------------------------------------------------------------
 %	PRESENTATION SLIDES
@@ -106,7 +120,7 @@
 %------------------------------------------------
 
 \begin{frame}
-\frametitle{Задача кратчайшего пути}
+\frametitle{Задача о кратчайшем пути}
 \begin{columns}[c] % The "c" option specifies centered vertical alignment while the "t" option is used for top vertical alignment
 
 \column{.45\textwidth} % Left column and width
@@ -147,21 +161,19 @@
   \item Яндекс.Карты, Google.Maps, Yahoo! Maps
   \item Mapquest, Microsoft MapPoint
   \item GPS устройства
-  \item Приближение для задачи TSP
-  \item Некоторые задачи AI
   \item и т.д.
   \end{itemize}
 
 \item Не всё так просто:
 
   \begin{itemize}
-  \item Алгоритм Дейкстры не слишком быстрый
+  \item Алгоритм Дейкстры на графе USA работает около 5 сек.
   \item Предпосчитать всё заранее не получится:
   	\begin{itemize}	
     \item время (Европа): $n \times Dijkstra \sim 5$ лет 
     \item память(Европа): $n \times n$ таблица $\sim 1$ петабайт  
     \end{itemize}
-  \item Нужно нечто среднее
+  %\item Нужно нечто среднее
   \end{itemize}
   
 \end{enumerate}
@@ -176,65 +188,70 @@
 
 %------------------------------------------------
 
-\begin{frame}
-\frametitle{Двунаправленный алгоритм}
-\begin{block}{Двунаправленный Дейкстра}
-  \begin{itemize}	
-  \item запускаем \textbf{forward} Dijkstra от $s$, находим $d_f(v)$ 
-  \item запускаем \textbf{reverse} Dijkstra от $t$, находим $d_r(v)$
-  \item переключаемся после каждой итерации
-  \end{itemize}
-\end{block}
+%\begin{frame}
+%\frametitle{Двунаправленный алгоритм}
+%\begin{block}{Двунаправленный Дейкстра}
+%  \begin{itemize}	
+%  \item запускаем \textbf{forward} Dijkstra от $s$, находим $d_f(v)$ 
+%  \item запускаем \textbf{reverse} Dijkstra от $t$, находим $d_r(v)$
+%  \item переключаемся после каждой итерации
+%  \end{itemize}
+%\end{block}
 
-\begin{block}{Когда найдётся вершина просканированная дважды:}
-  \begin{itemize}	
-  \item просматриваем все рёбра с концами, просмотренными разными Dijkstra
-  \item находим минимум $d_f(u) + w(u, v) + d_r(v)$
-  \end{itemize}
-\end{block}
-\end{frame}
+%\begin{block}{Когда найдётся вершина просканированная дважды:}
+%  \begin{itemize}	
+%  \item просматриваем все рёбра с концами, просмотренными разными Dijkstra
+%  \item находим минимум $d_f(u) + w(u, v) + d_r(v)$
+%  \end{itemize}
+%\end{block}
+%\end{frame}
 
 %------------------------------------------------
 
 \begin{frame}
 \frametitle{Алгоритм Дейкстры}
-\includegraphics[width=\textwidth, page={1}]{dijkstra_12_100000.pdf}
+\includegraphics[width=\textwidth]{dijkstra.pdf}
 \end{frame}
 
 %------------------------------------------------
 
 \begin{frame}
 \frametitle{Двунаправленный Дейкстра}
-\includegraphics[width=\textwidth, page={2}]{dijkstra_12_100000.pdf}
+\includegraphics[width=\textwidth]{biDijkstra.pdf}
 \end{frame}
 
 %------------------------------------------------
 
-\begin{frame}
-\frametitle{Сравнение}
-\begin{table}
-\begin{tabular}{l l l l l}
-\toprule
-\textbf{Метод} & \textbf{Предподсчёт (сек./mb)} & \textbf{scaned} 
-& \textbf{ms}\\
-\midrule
-Dijkstra    & ---/30 & 506708 & 416.569\\
-biDijkstra  & ---/30 & 380603 & 361.195\\
-\bottomrule
-\end{tabular}
-\caption{США, Флорида, 1.2 млн}
-\end{table}
-\end{frame}
+%\begin{frame}
+%\frametitle{Сравнение}
+%\begin{table}
+%\begin{tabular}{l l l l l}
+%\toprule
+%\textbf{Метод} & \textbf{Предподсчёт (сек./mb)} & \textbf{scaned} 
+%& \textbf{ms}\\
+%\midrule
+%Dijkstra    & ---/30 & 506708 & 416.569\\
+%biDijkstra  & ---/30 & 380603 & 361.195\\
+%\bottomrule
+%\end{tabular}
+%\caption{США, Флорида, 1.2 млн}
+%\end{table}
+%\end{frame}
 
 %------------------------------------------------
 
 \begin{frame}
 \frametitle{A* поиск}
+Неформально:
 \begin{itemize}	
-  \item Возьмём любую функцию (потенциала) $\pi \colon V \to \mathbb{R}$
+  \item Просматривает сначала те маршруты, которые «кажутся» ведущими к цели
+  \item При выборе вершины он также учитывает \textit{весь} пройденный до неё путь
+\end{itemize}
+Формально:
+\begin{itemize}	
+  \item Возьмём функцию $\pi \colon V \to \mathbb{R}$, т.ч. $\pi(v) \leq dist(v, t)$
   \item A* поиск $\equiv$ Dijkstra с расстоянием $w_\pi$
   \item $w_{\pi}(u,v) = w(u, v) - \pi(u) + \pi(v)$
-  \item Для корректности нужно: $w_{\pi} \geq 0$
   \item $\pi$ даёт нижнуюю оценку на расстояние
   \item Чем точнее оценка, тем быстрее сходимость
   \item Эффект: \textbf{целенаправленный} поиск
@@ -243,63 +260,32 @@ biDijkstra  & ---/30 & 380603 & 361.195\\
 
 %------------------------------------------------
 
-\begin{frame}
-\frametitle{Двунаправленный A* поиск}
-\begin{enumerate}
-
-\item Нужно две функции потенциала: $\pi_f$ и $\pi_r$
-\item Проблема: получатся разные расстояния!
-\item Решение: усредняем потенциалы 
-\item $\pi_f = \frac{\pi_f - \pi_r}{2}$
-\item $\pi_r = \frac{\pi_r - \pi_f}{2}$
-\end{enumerate}
-
-\end{frame}
-
 %------------------------------------------------
 
 \begin{frame}
 \frametitle{A* поиск}
-\includegraphics[width=\textwidth, page={1}]{aStar_12_100000.pdf}
+\includegraphics[width=\textwidth]{aStar.pdf}
 \end{frame}
 
 %------------------------------------------------
 
 \begin{frame}
 \frametitle{Двунаправленный A*}
-\includegraphics[width=\textwidth, page={2}]{aStar_12_100000.pdf}
+\includegraphics[width=\textwidth]{biAStar.pdf}
 \end{frame}
 
 %------------------------------------------------
-
-\begin{frame}
-\frametitle{Сравнение}
-\begin{table}
-\begin{tabular}{l l l l l}
-\toprule
-\textbf{Метод} & \textbf{Предподсчёт (сек./mb)} & \textbf{scaned} 
-& \textbf{ms}\\
-\midrule
-Dijkstra    & ---/30 & 506708 & 416.569\\
-biDijkstra  & ---/30 & 380603 & 361.195\\
-A*          & ---/30 & 161969 & 206.392\\
-biA*        & ---/30 & 149847 & 222.381\\
-\bottomrule
-\end{tabular}
-\caption{США, Флорида, 1.2 млн}
-\end{table}
-\end{frame}
 
 %------------------------------------------------
 
 \begin{frame}
 \frametitle{ALT}
 \begin{itemize}	
-  \item \textbf{A}* + \textbf{L}andmarks + 	\textbf{T}riangle inequality: \textbf{ALT} \cite{p1} 
-  \item Предподсчёт: выбираем несколько (например, 16) вершин как \textbf{ориентиры}
-  \item Считаем расстояние от них до всех остальных
+  \item \textbf{A}* + \textbf{L}andmarks + 	\textbf{T}riangle inequality: \textbf{ALT} \cite{p2} 
+  \item Две части: \textbf{предподсчёт} и \textbf{запрос}, использующий предподсчёт
+  \item \textbf{Предподсчёт}: выбираем несколько (например, 16) вершин как \textbf{ориентиры}
+  \item Находим Дейкстрой расстояние от них до всех остальных
   \item Сохраняем эти расстояния
-  \item Запрос: A* поиск с ориентирами, используя неравенство треугольника
 \end{itemize}
 \end{frame}
 
@@ -309,9 +295,13 @@ biA*        & ---/30 & 149847 & 222.381\\
 \begin{frame}
 \frametitle{ALT}
 \begin{enumerate}	
-\item Используем неравенство $\triangle$
-	$$dist(u, v) \geq dist(A, v) - dist(A, u)$$
-    $$dist(u, v) \geq dist(u, A) - dist(v, A)$$
+\item \textbf{Запрос}: A* поиск с ориентирами, в качестве $\pi$ берётся оценка из неравенства $\triangle$ для ориентиров
+\item Неравенство $\triangle \colon$
+\begin{gather*}
+	dist(u, v) \geq dist(A, v) - dist(A, u)\\
+    dist(u, v) \geq dist(u, A) - dist(v, A)
+\end{gather*}
+\includegraphics[scale=0.18]{triangle.jpg}
 \item Выбираем максимум нижних границ по всем ориентирам
 \item Больше ориентиров $\Rightarrow$ точнее оценка, больше памяти
 \end{enumerate}
@@ -340,7 +330,7 @@ biA*        & ---/30 & 149847 & 222.381\\
 \item Делим карту на $n$ равных секторов
 \item Выбираем самую дальнюю от центра вершину в каждом секторе как ориентир
 \end{enumerate}
-\includegraphics[scale=.25, page={2}]{usaPlanar.jpg}
+\includegraphics[scale=.25]{planar.jpg}
 \end{frame}
 
 %------------------------------------------------
@@ -379,14 +369,14 @@ biA*        & ---/30 & 149847 & 222.381\\
 
 \begin{frame}
 \frametitle{avoidALT}
-\includegraphics[width=\textwidth, page={1}]{avoidALT_12_100000_.pdf}
+\includegraphics[width=\textwidth]{avoidALT.pdf}
 \end{frame}
 
 %------------------------------------------------
 
 \begin{frame}
 \frametitle{Двунаправленный avoidALT}
-\includegraphics[width=\textwidth, page={2}]{avoidALT_12_100000_.pdf}
+\includegraphics[width=\textwidth]{biAvoidALT.pdf}
 \end{frame}
 
 %------------------------------------------------
@@ -413,13 +403,6 @@ biALT       & 0.5/120  &  31384 & 123.361\\
 
 %------------------------------------------------
 
-\begin{frame}
-\frametitle{TNR}
-TODO
-\end{frame}
-
-%------------------------------------------------
-
 
 %------------------------------------------------
 \section{Результаты}
@@ -432,6 +415,12 @@ TODO
 \item Алгоритмами A*, ALT, TNR
 \item boost::optional, boost::test
 \item форматом BMP 
+\end{enumerate}
+Реализовано:
+\begin{enumerate}
+\item Dijkstra/bi, A*/bi, ALT/bi (random, planar, avoid)
+\item отрисовка графа
+\item \url{https://github.com/ordian/Graph}
 \end{enumerate}
 \end{frame}
 

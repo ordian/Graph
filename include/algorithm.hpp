@@ -1,6 +1,7 @@
 #include "graph.hpp"
 #include <boost/optional.hpp>
 #include <fstream>
+#include <set>
 
 double const EPS = 1e-5;
 
@@ -32,6 +33,17 @@ struct landmark
     vector<double> distances;
 };
 
+/* for grid TNR */
+struct LocalTransitNode
+{
+    LocalTransitNode(sz i = 0, double d = 0.0)
+	: id(i)
+	, distance(d)
+    {}
+    sz id;
+    double distance;
+};
+
 
 class ShortestPath
 {
@@ -46,7 +58,10 @@ public:
 	, dijkstra_(g.num_v(), INFINITY)
 	, ALTPreprocessing_(ALTPreprocess(num_landmarks, ALT))
 	, numSelectedLandmarks_(num_landmarks)
-    {}
+	  //, localTransitNodes_(g.num_v())
+    {
+	//gridTNRPreprocess(128);
+    }
    
     struct Comparator 
     {
@@ -94,6 +109,12 @@ public:
     vector<landmark> randomALTPreprocess(sz num_landmarks = 16);
     vector<landmark>  avoidALTPreprocess(sz num_landmarks = 16);
 
+    // std::set<sz> dijkstraLocal(sz from, 
+    // 			       long x_cell, 
+    // 			       long y_cell,
+    // 			       std::set<sz> & transits);
+    // void gridTNRPreprocess(int grid = 256);
+
     void dijkstraAll(sz from);
     
     void printPath(sz src, sz dst) const;
@@ -112,12 +133,17 @@ private:
     sz from_;
     sz to_;
     Graph & graph_;
-    vector<boost::optional<sz> > prev_;
+    vector< boost::optional<sz> > prev_;
     vector<char> visited;
     statistics statistics_;
     vector<double> dijkstra_;
     vector<landmark> ALTPreprocessing_;
     sz numSelectedLandmarks_;
+    // vector<sz> transitNodes_;
+    // vector< vector<LocalTransitNode> > localTransitNodes_;
+    // vector< vector<double> > transitTable_;
+    // vector< vector< boost::optional<sz> > > transitTablePrev_;
+    
 
 private:
     ShortestPath const& 

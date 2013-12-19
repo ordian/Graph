@@ -12,6 +12,7 @@
 #include <ctime>
 #include <stack>
 #include <queue>
+//#include "../include/timer.hpp"
 
  
 #define getrandom(min, max) \
@@ -327,7 +328,7 @@ void ShortestPath::dijkstraAll(sz from)
     priority_queue<Node, Comparator>
         Q(&vertex_queue_positions);
  
-    if (dijkstra_[0] != INFINITY)
+    if (dijkstra_[from] != INFINITY)
 	dijkstra_ = vector<double>(n, INFINITY);
 
     dijkstra_[from] = 0.0;
@@ -395,14 +396,16 @@ struct LandmarkComparator
 /* BOTTLENECK */
 void ShortestPath::ALTPreprocessing()
 {
-    /*    
+/*    Timer tmr;
+    tmr.reset();
     std::sort(ALTPreprocessing_.begin(), 
 	      ALTPreprocessing_.end(),
 	      LandmarkComparator(from_, to_));
     
     // empirical optimum 
     numSelectedLandmarks_ = 4;
-    */
+    std::cout << tmr.elapsed() << std::endl;
+*/
 }
 
 void ShortestPath::doNothingPreprocessing()
@@ -414,13 +417,16 @@ vector<landmark> ShortestPath::avoidALTPreprocess(sz num_landmarks)
 {
     srand(time(NULL));
     vector<landmark> preproc;
+    
     sz n = graph_.num_v();
+    vector<bool> has_child_landmark(n, false);
 
     /* first landmark */
     sz first = getrandom(0, n - 1);
     dijkstraAll(first);
     preproc.push_back(landmark(first, dijkstra_));
-
+    has_child_landmark[first] = true;
+    
     for (sz counter = 0; counter + 1 < num_landmarks; ++counter)
     {
 	/* pick a root r at random */
@@ -453,7 +459,7 @@ vector<landmark> ShortestPath::avoidALTPreprocess(sz num_landmarks)
 
 	vector<double> LB(n, 0);
 	vector<double> weight(n, 0);
-	vector<double> size(n, 0);
+	vector<double> size(n, 0);	
 	sz w_max = r;
 	double cur_max = 0;
 
@@ -461,8 +467,7 @@ vector<landmark> ShortestPath::avoidALTPreprocess(sz num_landmarks)
 	{
 	    sz v = order.top();
 	    order.pop();
-	    bool is_landmark = false;
-	    
+	 	    
 	    /* set LB */
 	    for (sz i = 0; i < preproc.size(); ++i)
 	    {
@@ -471,22 +476,30 @@ vector<landmark> ShortestPath::avoidALTPreprocess(sz num_landmarks)
 		if (LB[v] + EPS < d)
 		    LB[v] = d;
 		if (preproc[i].id == v)
-		    is_landmark = true;
+		    has_child_landmark[v] = true;
 	    }
 
 	    /* set weight */
 	    weight[v] = dijkstra_[v] - LB[v];
+	    assert(weight[v] + EPS > 0);
 	    
 	    /* set size */
-	    if (!is_landmark)
+	    if (!has_child_landmark[v])
 		for (sz i = 0; i < tree[v].size(); ++i)		
 		{
-		    size[v] += size[tree[v][i]];
-		    size[v] += weight[tree[v][i]];
-		    if (size[tree[v][i]] < EPS)
+		    if (!has_child_landmark[v])
+		    {
+			size[v] += size[tree[v][i]];
+			size[v] += weight[tree[v][i]];
+		    }
+
+		    /* not a leaf */
+		    if (size[tree[v][i]] < EPS &&
+			(tree[tree[v][i]].size() || 
+			 (has_child_landmark[tree[v][i]])))
 		    {
 			size[v] = 0;
-			break;
+			has_child_landmark[v] = true;
 		    }
 		    
 		    if (cur_max + EPS < size[tree[v][i]])
@@ -500,19 +513,20 @@ vector<landmark> ShortestPath::avoidALTPreprocess(sz num_landmarks)
 	}   
 
 	/* starting at w_max, go down tree following the maximum-sized child */
-
+	
 	while (!tree[w_max].empty())
 	{
 	    double w = 0;
 	    if (tree[w_max][0] == w_max)
 		break;
-	    w_max = tree[w_max][0];
+	    sz cur_w_max = tree[w_max][0];
 	    for (sz i = 0; i < tree[w_max].size(); ++i)
 		if (w + EPS < size[tree[w_max][i]])
 		{
 		    w = size[tree[w_max][i]];
-		    w_max = tree[w_max][i];
+		    cur_w_max = tree[w_max][i];
 		}
+	    w_max = cur_w_max;
 	}
 	/* pick the leaf at the end of this path as the new landmark */
 	dijkstraAll(w_max);
@@ -852,6 +866,228 @@ double ShortestPath::biALT()
 				  &ShortestPath::biALTHeuristic);
 }
 
+/* 
+std::set<sz> ShortestPath::dijkstraLocal(sz from, 
+					 long x_cell, 
+					 long y_cell,
+					 std::set<sz> & transitNodes)
+{
+    sz n = graph_.num_v();
+    statistics_ = statistics();
+    prev_ = vector<boost::optional<sz> >
+        (n, boost::optional<sz>());
+    visited = vector<char>(n, '\0');
+    
+    std::set<sz> new_transits;
+
+    vector<sz> vertex_queue_positions(n, 0);
+    priority_queue<Node, Comparator>
+        Q(&vertex_queue_positions);
+    
+    dijkstra_ = vector<double>(n, INFINITY);
+    
+    dijkstra_[from] = 0.0;
+    prev_[from] = from;
+    
+    Q.push(Node(from, 0.0));
+    visited[from] = 'y';
+
+    long x_center_cell = graph_.vertex(from).x() / x_cell;
+    long y_center_cell = graph_.vertex(from).y() / y_cell;
+    
+    while(!Q.empty())
+    {
+	sz u, v;
+	double w;
+
+        u = Q.top().id();
+        Q.pop();
+
+	long x_u_cell = std::abs(graph_.vertex(u).x() / x_cell 
+				 - x_center_cell);
+	long y_u_cell = std::abs(graph_.vertex(u).y() / y_cell 
+				 - y_center_cell);
+
+
+	if ((x_u_cell > 4) || (y_u_cell > 4))
+	    break;
+        
+        vector<sz> const &neighbours = graph_.neighbours(u);
+        for (sz i = 0; i != neighbours.size(); ++i)
+            if (!visited[neighbours[i]])
+            {
+                v = neighbours[i];
+                w = graph_.edgeWeight(u, i);
+
+		
+                if (dijkstra_[u] + w + EPS < dijkstra_[v])
+                {
+		    dijkstra_[v] = dijkstra_[u] + w;
+                    prev_[v] = u;
+		    
+                    if (!vertex_queue_positions[v])
+		    {
+                        Q.push(Node(v, dijkstra_[v]));
+			++statistics_.pushed;
+                    }
+                    else 
+		    {
+                        Q.change_key(vertex_queue_positions[v], 
+                                     Node(v, dijkstra_[v]));
+			++statistics_.decreased;
+		    }
+                }
+            } 
+
+        visited[u] = 'y';
+	
+	if (prev_[u])
+	{
+	    long x_v_cell = std::abs(graph_.vertex(prev_[u].get()).x() / x_cell 
+				     - x_center_cell);
+	    long y_v_cell = std::abs(graph_.vertex(prev_[u].get()).y() / y_cell 
+				     - y_center_cell);
+	
+            //	cross boundaries 
+	    if ((x_v_cell < 3 && x_u_cell > 2) ||
+		(x_u_cell < 3 && x_v_cell > 2) ||
+		(y_v_cell < 3 && y_u_cell > 2) ||
+		(y_u_cell < 3 && y_v_cell > 2))
+	    {
+		new_transits.insert(std::min(u, prev_[u].get()));
+		transitNodes.insert(std::min(u, prev_[u].get()));
+	    }
+	}
+
+
+    } 
+    
+    return new_transits;
+}
+*/
+
+/* 
+void ShortestPath::gridTNRPreprocess(int grid)
+{
+    char const * transits_file  = "preprocessing/transitNodes.txt";
+    char const * transits_table = "preprocessing/transitTable.txt";
+    char const * transits_prev  = "preprocessing/transitTablePrev.txt";
+    sz num_transits;
+    
+    if (!file_exists(transits_file))
+    {
+	sz n = graph_.num_v();
+	long x_max = LONG_MIN;
+	long y_max = LONG_MIN;
+	
+	for (size_t i = 0; i < n; ++i)
+	{
+	    Vertex const & v = graph_.vertex(i);
+	    if (v.x() > x_max)
+		x_max = v.x();
+	    if (v.y() > y_max)
+		y_max = v.y();
+	}
+	
+	long x_cell = x_max / grid;
+	long y_cell = y_max / grid;
+	
+	if (x_cell * grid < x_max)
+	    ++x_cell;
+	if (y_cell * grid < y_max)
+	    ++y_cell;
+
+	std::set<sz>::const_iterator it;
+	std::set<sz> transitNodes;
+	std::cout << "Find transit nodes..." << std::endl;
+	for (sz i = 0; i < n; ++i)
+	{
+	    //std::cout << n - i << std::endl;
+	    std::set<sz> nt = dijkstraLocal(i, x_cell, y_cell, transitNodes);
+	    
+	    for (it = nt.begin(); it != nt.end(); ++it)
+	    {
+		localTransitNodes_[i].push_back(
+		    LocalTransitNode(*it, dijkstra_[*it])
+		    );
+	    }
+	}
+	std::cout << "Writing to file " << transits_file << std::endl;
+	
+	transitNodes_ = vector<sz>(transitNodes.begin(), transitNodes.end());
+	num_transits = transitNodes_.size();
+	std::cout << num_transits << " nodes" << std::endl;
+	std::ofstream out(transits_file);
+	out.write(reinterpret_cast<char*>(&num_transits), sizeof(sz));
+	for (sz i = 0; i != transitNodes_.size(); ++i)
+	    out.write(reinterpret_cast<char*>(&transitNodes_[i]), sizeof(sz));
+    }
+    else
+    {
+
+	std::cout << "Reading from file" << transits_file << std::endl;	
+
+
+	std::ifstream in(transits_file);
+	in.read(reinterpret_cast<char*>(&num_transits), sizeof(sz));
+	transitNodes_.resize(num_transits);
+	for (sz i = 0; i != num_transits; ++i)
+	    in.read(reinterpret_cast<char*>(&transitNodes_[i]), sizeof(sz));
+
+    }
+
+    transitTable_.resize(num_transits);
+    transitTablePrev_.resize(num_transits);
+    for (sz i = 0; i < num_transits; ++i)
+	transitTable_[i].resize(num_transits);
+    
+    if (!file_exists(transits_table) ||
+	!file_exists(transits_prev))
+    {
+	std::cout << "Wait for a table construction..." << std::endl;
+
+	
+	for (sz i = 0; i < num_transits; ++i)
+	{
+	    std::cout << num_transits - i << std::endl;
+	    dijkstraAll(transitNodes_[i]);
+	    for (sz j = 0; j < num_transits; ++j)
+	    {
+		transitTable_[i][j] = dijkstra_[transitNodes_[j]];
+	    }
+	    transitTablePrev_[i] = prev_;
+	}
+	
+	std::cout << "Writing to files..." << std::endl;
+	std::ofstream out_table(transits_table);
+	std::ofstream out_prev(transits_prev);
+	for (sz i = 0; i < num_transits; ++i)
+	    for (sz j = 0; j < num_transits; ++j)
+		out_table.write(reinterpret_cast<char*>(&transitTable_[i][j]),
+				sizeof(double));
+	
+	for (sz i = 0; i < num_transits; ++i)
+	    out_prev.write(reinterpret_cast<char*>(&transitTablePrev_[i]),
+			   sizeof(sz));
+	
+    }
+    else
+    {
+	std::cout << "Reading from files..." << std::endl;
+	std::ifstream in_table(transits_table);
+	std::ifstream in_prev(transits_prev);
+	for (sz i = 0; i < num_transits; ++i)
+	    for (sz j = 0; j < num_transits; ++j)
+		in_table.read(reinterpret_cast<char*>(&transitTable_[i][j]),
+			      sizeof(double));
+	
+	for (sz i = 0; i < num_transits; ++i)
+	    in_prev.read(reinterpret_cast<char*>(&transitTablePrev_[i]),
+			 sizeof(sz));
+	
+    }
+}
+*/
 
 
 void ShortestPath::printPath(sz src, sz dst) const
@@ -882,7 +1118,7 @@ void ShortestPath::printStatistics() const
 
 void ShortestPath::writeBMP(char const * bmpfile) const
 {
-    int const BORDER = 10;
+    int const BORDER = 20;
     int const HEIGHT = 3000 + 2 * BORDER;
     int const WIDTH  = 3000 + 2 * BORDER;
     
@@ -954,7 +1190,7 @@ void ShortestPath::writeBMP(char const * bmpfile) const
     /* destination */
     
     draw.circle(BORDER + graph_.vertex(to_).x() / x_scale, 
-		BORDER + graph_.vertex(to_).y() / y_scale, 6);
+		BORDER + graph_.vertex(to_).y() / y_scale, BORDER / 2);
     while (dst != from_)
     {
 	Vertex const & u = graph_.vertex(dst);
@@ -968,7 +1204,7 @@ void ShortestPath::writeBMP(char const * bmpfile) const
     /* source */
     
     draw.circle(BORDER + graph_.vertex(from_).x() / x_scale, 
-		BORDER + graph_.vertex(from_).y() / y_scale, 6);
+		BORDER + graph_.vertex(from_).y() / y_scale, BORDER / 2);
     
 
     for (sz it = 0;
@@ -983,7 +1219,7 @@ void ShortestPath::writeBMP(char const * bmpfile) const
 		    graph_.vertex(ALTPreprocessing_[it].id).x() / x_scale, 
 		    BORDER + 
 		    graph_.vertex(ALTPreprocessing_[it].id).y() / y_scale, 
-		    BORDER - 3);
+		    BORDER / 2);
     }
 
     

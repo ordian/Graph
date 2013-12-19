@@ -258,6 +258,7 @@ BOOST_FIXTURE_TEST_CASE(testAlgorithmClose, Fixture)
     BOOST_CHECK_CLOSE(ALT, aStar, EPS);
 }
 
+
 BOOST_FIXTURE_TEST_CASE(testAlgorithmRandom, Fixture)
 {
     for (int i = 0; i < NUM_RAND_TESTS; ++i)
@@ -367,11 +368,13 @@ BOOST_AUTO_TEST_CASE(testAlgorithmTiny)
     BOOST_CHECK_CLOSE(ALT, aStar, EPS);
 }
 
+/*
 BOOST_AUTO_TEST_CASE(testPerformance)
 {
-    Graph g("INPUT/USA-road-d.FLA.co", "INPUT/USA-road-d.FLA.gr");
+    Graph g("/media/debian/DATA/!SP/USA-road-d.LKS.co",
+	    "/media/debian/DATA/!SP/USA-road-d.LKS.gr");
     sz num_algo = 2 * (2 + 3 * 1);
-    /* mean values */
+    
     vector<sz>   visited(num_algo);
     vector<double> times(num_algo);
     Timer tmr;
@@ -438,6 +441,6 @@ BOOST_AUTO_TEST_CASE(testPerformance)
 		  << std::endl;
     }
 }
-
+*/
 
 

@@ -1,16 +1,3 @@
-Shortest Path
-=============
-
-Build
-=====
-
-'make'
-
-Test
-====
-
-'make test'
-
 Graph single pair shortest path algorithms:
 ==========================================
 
@@ -26,3 +13,13 @@ Graph single pair shortest path algorithms:
 TODO:
 
 * TNR
+
+Build
+=====
+```bash 
+make```
+Test
+====
+```bash
+make test```
+

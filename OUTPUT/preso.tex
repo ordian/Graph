@@ -1,16 +1,3 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Beamer Presentation
-% LaTeX Template
-% Version 1.0 (10/11/12)
-%
-% This template has been downloaded from:
-% http://www.LaTeXTemplates.com
-%
-% License:
-% CC BY-NC-SA 3.0 (http://creativecommons.org/licenses/by-nc-sa/3.0/)
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 %----------------------------------------------------------------------------------------
 %	PACKAGES AND THEMES
 %----------------------------------------------------------------------------------------
@@ -86,8 +73,8 @@
 %----------------------------------------------------------------------------------------
 %	TITLE PAGE
 %----------------------------------------------------------------------------------------
-\setbeamertemplate{footline}{\hspace*{1.5cm}\scriptsize{\hfill\insertframenumber\hspace*{.5cm}}} 
-
+\setbeamerfont{page number in head/foot}{size=\large}
+\setbeamertemplate{footline}[frame number]
 \title[Граф дорог]{Кратчайшие пути на графе дорог} % The short title appears at the bottom of every slide, the full title is only on the title page
 
 \author{Андроник Ордиян\\ \textbf{Научный руководитель}: Алексей Гуревич} % Your name
@@ -298,8 +285,8 @@
 \item \textbf{Запрос}: A* поиск с ориентирами, в качестве $\pi$ берётся оценка из неравенства $\triangle$ для ориентиров
 \item Неравенство $\triangle \colon$
 \begin{gather*}
-	dist(u, v) \geq dist(A, v) - dist(A, u)\\
-    dist(u, v) \geq dist(u, A) - dist(v, A)
+	dist(v, w) \geq dist(A, w) - dist(A, v)\\
+    dist(v, w) \geq dist(v, A) - dist(w, A)
 \end{gather*}
 \includegraphics[scale=0.18]{triangle.jpg}
 \item Выбираем максимум нижних границ по всем ориентирам
@@ -337,14 +324,14 @@
 \begin{frame}
 \frametitle{ALT: avoid ориентиры}
 \begin{enumerate}	
-\item Идея:
+\item Неформально:
 
 	\begin{itemize}
     \item Добавляем ориентиры по очереди
     \item Предпочтение областям, плохо покрытым уже выбранными ориентирами
     \end{itemize}
     
-\item Реализация:
+\item Формально:
 
 	\begin{itemize}
     \item выбираем случайно r
@@ -389,15 +376,17 @@
 \textbf{Метод} & \textbf{Предподсчёт (мин./mb)} & \textbf{scaned} 
 & \textbf{ms}\\
 \midrule
-Dijkstra    & ---/30  & 506708 & 416.569\\
-biDijkstra  & ---/30  & 380603 & 361.195\\
-A*          & ---/30  & 161969 & 206.392\\
-biA*        & ---/30  & 149847 & 222.381\\
-ALT         & 0.5/120  &  44360 & 102.071\\
-biALT       & 0.5/120  &  31384 & 123.361\\
+Dijkstra    & ---/300  & 1211085 & 3802.716227\\
+biDijkstra  & ---/300  & 1060090 & 2970.800198\\
+A*          & ---/300  &  427857 & 2164.348002\\
+biA*        & ---/300  &  414035 & 1754.347948\\
+planarALT   &   4/760  & 118220 & 1550.984824\\
+biPlanarALT &   4/760  &  75252 &  990.060073\\
+avoidALT    &   5/760  & 117591 & 1334.5507815\\
+biAvoidALT  &   5/760  &  55614 &  832.725301\\
 \bottomrule
 \end{tabular}
-\caption{США, Флорида, 1.2 млн}
+\caption{Восток США, 3.5 млн}
 \end{table}
 \end{frame}
 

@@ -18,11 +18,13 @@ Build
 =====
 
 ```bash 
-make```
+make
+```
 
 Test
 ====
 
 ```bash
-make test```
+make test
+```
 

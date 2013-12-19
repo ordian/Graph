@@ -16,10 +16,13 @@ TODO:
 
 Build
 =====
+
 ```bash 
 make```
+
 Test
 ====
+
 ```bash
 make test```
 

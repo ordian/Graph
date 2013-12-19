@@ -1,7 +1,18 @@
 Shortest Path
+=============
+
+Build
 =====
 
+'make'
+
+Test
+====
+
+'make test'
+
 Graph single pair shortest path algorithms:
+==========================================
 
 * Dijkstra
 * AStar
